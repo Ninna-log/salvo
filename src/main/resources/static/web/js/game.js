@@ -10,7 +10,6 @@ function getParameterByName(name) {
 function loadData() {
   $.get('/api/game_view/' + getParameterByName('gp'))
     .done(function (data) {
-    console.log(data);
       var playerInfo;
       if (data.gamePlayers[0].id == getParameterByName('gp'))
         playerInfo = [data.gamePlayers[0].player, data.gamePlayers[1].player];
@@ -23,7 +22,7 @@ function loadData() {
         shipPiece.locations.forEach(function (shipLocation) {
           if(isHit(shipLocation,data.salvoes,playerInfo[0].id)  !=  0){
             $('#B_' + shipLocation).addClass('ship-piece-hited');
-            $('#B_' + shipLocation).text(isHit(shipLocation,data.salvoes,playerInfo[0].id));
+                        $('#B_' + shipLocation).text(isHit(shipLocation,data.salvoes,playerInfo[0].id));
           }
 
           else
@@ -34,8 +33,6 @@ function loadData() {
         if (playerInfo[0].id === salvo.player) {
           salvo.locations.forEach(function (location) {
             $('#S_' + location).addClass('salvo-piece');
-            $('#S_' + location).text(salvo.turn);
-
           });
         } else {
           salvo.locations.forEach(function (location) {

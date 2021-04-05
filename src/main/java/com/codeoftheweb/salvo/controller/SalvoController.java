@@ -56,17 +56,17 @@ public class SalvoController {
     }*/
 
     @PostMapping("/players")
-    public ResponseEntity<Object> register(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<Object> register(@RequestParam String email, @RequestParam String password) {
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty()) {
             return new ResponseEntity<>(makeMap("error", "Missing data"), HttpStatus.FORBIDDEN);
         }
 
-        if (playerRepository.findByUserName(username) != null) {
-            return new ResponseEntity<>(makeMap("error", "Name already in used"), HttpStatus.FORBIDDEN);
+        if (playerRepository.findByUserName(email) != null) {
+            return new ResponseEntity<>(makeMap("error", "Name already in use"), HttpStatus.FORBIDDEN);
         }
 
-        playerRepository.save(new Player(username, passwordEncoder.encode(password)));
+        playerRepository.save(new Player(email, passwordEncoder.encode(password)));
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

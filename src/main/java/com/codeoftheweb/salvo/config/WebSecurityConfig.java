@@ -17,23 +17,17 @@ import javax.servlet.http.HttpSession;
 
 @EnableWebSecurity
 @Configuration
-// tells Spring to create an instance of this class automatically. It can then be found and used by the security framework.
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     PlayerRepository playerRepository;
 
-    // Spring Security provides an interface, PasswordEncoder,
-    // to do this job. We can get an instance of an encoder using another class, PasswordEncoderFactories
-    // Password is been encrypted before storing it
     @Bean
     public PasswordEncoder passwordEncoder() {
 
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    // Provides the code that Spring should run to get a user's password and roles
-    //Giving Spring a method to search in playerRepository the userName and password of player and authenticate it.
     //AUTORIZATION
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -46,8 +40,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().permitAll();
 
         http.formLogin()
-                .usernameParameter("username")
-                .passwordParameter("password")
+                .usernameParameter("name")
+                .passwordParameter("pwd")
                 .loginPage("/api/login");
 
         http.logout().logoutUrl("/api/logout");
