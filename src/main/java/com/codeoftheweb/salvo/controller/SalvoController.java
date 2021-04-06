@@ -41,7 +41,7 @@ public class SalvoController {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
 
         if (isGuest(authentication)) {
-            dto.put("player", null);
+            dto.put("player", "Guest");
         }else {
             Player player = playerRepository.findByUserName(authentication.getName());
             dto.put("player", makePlayerDTO(player));
@@ -96,15 +96,16 @@ public class SalvoController {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
         dto.put("id", game.getId());
         dto.put("created", game.getDate());
-        dto.put("gamePlayers", game.getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(toList()));
+        dto.put("players", game.getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(toList()));
         dto.put("scores", game.getScores().stream().map(this::makeScoreDTO).collect(toList()));
         return dto;
     }
 
     private Object makeGamePlayerDTO(GamePlayer gamePlayer) {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        dto.put("id", gamePlayer.getId());
-        dto.put("player", makePlayerDTO(gamePlayer.getPlayer()));
+        dto.put("gpid", gamePlayer.getId());
+        dto.put("id", gamePlayer.getPlayer().getId());
+        dto.put("name", gamePlayer.getPlayer().getUserName());
         return dto;
     }
 
