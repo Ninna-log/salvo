@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,12 +72,53 @@ public class SalvoController {
     }
 
     @RequestMapping("/game_view/{gamePlayerId}")
-    public Object getGameView(@PathVariable Long gamePlayerId) {
-        Optional<GamePlayer> gamePlayerOptional = gamePlayerRepository.findById(gamePlayerId);
-        if (gamePlayerOptional.isPresent()){
-            return toGameViewDTO(gamePlayerOptional.get());
-        }else{
-            return "Sorry, gamePlayer doesn't exist";
+    public ResponseEntity<Map<String, Object>> getGameView(@PathVariable Long gamePlayerId, Authentication authentication) {
+        Player player = playerRepository.findByUserName(authentication.getName());
+        GamePlayer gamePlayer = gamePlayerRepository.findById(gamePlayerId).get();
+        if (gamePlayer.getPlayer().getId() == player.getId()) {
+            return new ResponseEntity<>(toGameViewDTO(gamePlayer), HttpStatus.ACCEPTED);
+        }
+        else {
+            return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PostMapping("/game/{gameId}/players") // adding the ability to create a game
+    public ResponseEntity<Map<String, Object>> joinGame(@PathVariable Long gameId, Authentication authentication) {
+        if (isGuest(authentication)) { // is a guest
+            return new ResponseEntity<>(makeMap("error", "No Access"), HttpStatus.UNAUTHORIZED);
+        } else {
+            Optional<Game> game = gameRepository.findById(gameId);
+            if (game.isEmpty()) {
+                return new ResponseEntity<>(makeMap("error", "Game not found"), HttpStatus.NOT_FOUND);
+            } else if (game.get().getPlayers().size() == 2) {
+                return new ResponseEntity<>(makeMap("error", "Sorry, game is full"), HttpStatus.FORBIDDEN);
+            } else { // On the contrary, game has only one player
+                Player player = playerRepository.findByUserName(authentication.getName());
+                if (game.get().getPlayers().stream().findAny().get().getId() == player.getId()) {
+                    return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.FORBIDDEN);
+                }else{
+                    GamePlayer gamePlayer = gamePlayerRepository.save(new GamePlayer(player, game.get(), LocalDateTime.now()));
+                    return new ResponseEntity<>(makeMap("gpid", gamePlayer.getId()), HttpStatus.CREATED);
+                }
+            }
+        }
+    }
+
+
+    @PostMapping("/games") // adding the ability to create a game
+    public ResponseEntity<Map<String, Object>> createGame(Authentication authentication) {
+
+        if (isGuest(authentication)) {
+            return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.UNAUTHORIZED);
+            // gets the current user with the authentication object, and if there is none, it is sent an Unauthorized response
+        } else {
+            Game game = gameRepository.save(new Game(LocalDateTime.now()));
+            Player player = playerRepository.findByUserName(authentication.getName());
+            GamePlayer gamePlayer = gamePlayerRepository.save(new GamePlayer(player, game, LocalDateTime.now()));
+            // creates and saves a new game, and then saves a new gamePlayer for this game and the current user
+            return new ResponseEntity<>(makeMap("gpid", gamePlayer.getId()), HttpStatus.CREATED);
+            // and then sends a Created response, with json containing the new gamePlayer id, e.g, {"gpid": 32}
         }
     }
 
@@ -96,16 +138,15 @@ public class SalvoController {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
         dto.put("id", game.getId());
         dto.put("created", game.getDate());
-        dto.put("players", game.getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(toList()));
+        dto.put("gamePlayers", game.getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(toList()));
         dto.put("scores", game.getScores().stream().map(this::makeScoreDTO).collect(toList()));
         return dto;
     }
 
     private Object makeGamePlayerDTO(GamePlayer gamePlayer) {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        dto.put("gpid", gamePlayer.getId());
-        dto.put("id", gamePlayer.getPlayer().getId());
-        dto.put("name", gamePlayer.getPlayer().getUserName());
+        dto.put("id", gamePlayer.getId());
+        dto.put("player", makePlayerDTO(gamePlayer.getPlayer()));
         return dto;
     }
 
