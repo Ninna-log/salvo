@@ -79,24 +79,24 @@ public class SalvoController {
             return new ResponseEntity<>(toGameViewDTO(gamePlayer), HttpStatus.ACCEPTED);
         }
         else {
-            return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(makeMap("error", "Nope, muy dude"), HttpStatus.UNAUTHORIZED);
         }
     }
 
-    @PostMapping("/game/{gameId}/players") // adding the ability to create a game
+    @PostMapping("/game/{gameId}/players") // adding the ability to join a game
     public ResponseEntity<Map<String, Object>> joinGame(@PathVariable Long gameId, Authentication authentication) {
         if (isGuest(authentication)) { // is a guest
-            return new ResponseEntity<>(makeMap("error", "No Access"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.UNAUTHORIZED);
         } else {
             Optional<Game> game = gameRepository.findById(gameId);
             if (game.isEmpty()) {
                 return new ResponseEntity<>(makeMap("error", "Game not found"), HttpStatus.NOT_FOUND);
-            } else if (game.get().getPlayers().size() == 2) {
+            } else if (game.get().getPlayers().size() > 1) {
                 return new ResponseEntity<>(makeMap("error", "Sorry, game is full"), HttpStatus.FORBIDDEN);
             } else { // On the contrary, game has only one player
                 Player player = playerRepository.findByUserName(authentication.getName());
                 if (game.get().getPlayers().stream().findAny().get().getId() == player.getId()) {
-                    return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.FORBIDDEN);
+                    return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.FORBIDDEN);
                 }else{
                     GamePlayer gamePlayer = gamePlayerRepository.save(new GamePlayer(player, game.get(), LocalDateTime.now()));
                     return new ResponseEntity<>(makeMap("gpid", gamePlayer.getId()), HttpStatus.CREATED);
@@ -110,7 +110,7 @@ public class SalvoController {
     public ResponseEntity<Map<String, Object>> createGame(Authentication authentication) {
 
         if (isGuest(authentication)) {
-            return new ResponseEntity<>(makeMap("error", "Not allowed"), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.UNAUTHORIZED);
             // gets the current user with the authentication object, and if there is none, it is sent an Unauthorized response
         } else {
             Game game = gameRepository.save(new Game(LocalDateTime.now()));
@@ -122,15 +122,53 @@ public class SalvoController {
         }
     }
 
+    @PostMapping("/games/players/{gamePlayerId}/ships")
+    public ResponseEntity<Map<String, Object>> placingShips(@PathVariable Long gamePlayerId, @RequestBody List<Ship>ships, Authentication authentication) {
+
+        if (isGuest(authentication)) {
+            return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.UNAUTHORIZED);
+        }else{
+            Optional<GamePlayer> gamePlayerOptional = gamePlayerRepository.findById(gamePlayerId);
+            if(gamePlayerOptional.isEmpty()){
+                return new ResponseEntity<>(makeMap("error", "No such gameplayer"), HttpStatus.NOT_FOUND);
+            }else{
+                Player player = playerRepository.findByUserName(authentication.getName());
+                // a gamePlayer variable is declared to get rid of the .get()
+                GamePlayer gamePlayer = gamePlayerOptional.get();
+
+                if(gamePlayer.getPlayer().getId() != player.getId()){
+                    // and if the gamePlayer doesn't match with the current user forbidden response is sent
+                    return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.FORBIDDEN);
+                }else if (gamePlayer.getShips().size() > 0){
+                    return new ResponseEntity<>(makeMap("error", "Nope, you've already placed your ships, my dude"), HttpStatus.FORBIDDEN);
+                }else if(ships.size() != 5) {
+                    return new ResponseEntity<>(makeMap("error", "You should add 5 ships"), HttpStatus.FORBIDDEN);
+                }else{
+                    ships.forEach((ship)-> {
+                        gamePlayer.addShip(ship);
+                        gamePlayerRepository.save(gamePlayer);
+                    });
+                    //Otherwise, the ships should be added to the game player and saved, and a Created response should be sent.
+                    return new ResponseEntity<>(makeMap("gpid", "Ships were successfully added"), HttpStatus.CREATED);
+                }
+            }
+        }
+    }
+
     // <---- Data transfer Objects ----> //
 
     private Map<String, Object> toGameViewDTO(GamePlayer gamePlayer) {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
+        Map<String, Object> hits = new LinkedHashMap<String, Object>();
+        hits.put("self", new ArrayList<>());
+        hits.put("opponent", new ArrayList<>());
         dto.put("id", gamePlayer.getId());
         dto.put("created", gamePlayer.getDate());
+        dto.put("gameState", "PLACESHIPS");
         dto.put("gamePlayers", gamePlayer.getGame().getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(Collectors.toList()));
         dto.put("ships", gamePlayer.getShips().stream().map(this::makeShipDTO).collect(Collectors.toList()));
         dto.put("salvoes", gamePlayer.getGame().getGamePlayers().stream().flatMap(gamePlayer1 -> gamePlayer1.getSalvos().stream()).map(this::makeSalvoDTO).collect(Collectors.toList()));
+        dto.put("hits", hits);
         return dto;
     }
 
