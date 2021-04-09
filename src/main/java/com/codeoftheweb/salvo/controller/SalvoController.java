@@ -1,10 +1,7 @@
 package com.codeoftheweb.salvo.controller;
 
 import com.codeoftheweb.salvo.model.*;
-import com.codeoftheweb.salvo.repositories.GamePlayerRepository;
-import com.codeoftheweb.salvo.repositories.GameRepository;
-import com.codeoftheweb.salvo.repositories.PlayerRepository;
-import com.codeoftheweb.salvo.repositories.ScoreRepository;
+import com.codeoftheweb.salvo.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +30,9 @@ public class SalvoController {
 
     @Autowired
     private ScoreRepository scoreRepository;
+
+    @Autowired
+    private SalvoRepository salvoRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -105,7 +105,6 @@ public class SalvoController {
         }
     }
 
-
     @PostMapping("/games") // adding the ability to create a game
     public ResponseEntity<Map<String, Object>> createGame(Authentication authentication) {
 
@@ -154,6 +153,45 @@ public class SalvoController {
             }
         }
     }
+
+    @PostMapping("/games/players/{gamePlayerId}/salvoes")
+    public ResponseEntity<Map<String, Object>> addingSalvoes(@PathVariable Long gamePlayerId, @RequestBody Salvo salvo, Authentication authentication) {
+        if (isGuest(authentication)) {
+            return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.UNAUTHORIZED);
+        }else{
+            Optional<GamePlayer> gamePlayerOptional = gamePlayerRepository.findById(gamePlayerId);
+            if(gamePlayerOptional.isEmpty()) {
+                return new ResponseEntity<>(makeMap("error", "Not found"), HttpStatus.NOT_FOUND);
+            }else {
+                Player player = playerRepository.findByUserName(authentication.getName());
+                GamePlayer gamePlayer = gamePlayerOptional.get();
+                Optional<GamePlayer> gamePlayerOptional2 = gamePlayer.getGame().getGamePlayers().stream().filter(gamePlayer1 -> gamePlayer1.getId() != gamePlayer.getId()).findFirst();
+
+                if (gamePlayer.getPlayer().getId() != player.getId()) {
+                    return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.FORBIDDEN);
+                } else if (salvo.getLocations().size() != 5) {  // salvo has Turn, Player and Location
+                    return new ResponseEntity<>(makeMap("error", "You should add 5 salvoes"), HttpStatus.FORBIDDEN);
+                } else if (salvo.getTurn() - 1 != gamePlayer.getSalvos().size()) {
+                    // e.g, if turn is = 1 and size is = 1, turn 1 -1 is 0, then 0 != 1 it's true, user hasn´t submitted a salvo in the same turn
+                    // otherwise, if turn is 2 and size = 1, turn 2 -1 is 1, then 1 != 1 it's false
+                    // it's only true when salvo.getTurn & gameplayer,getSalvos.size have the same numbers
+                    return new ResponseEntity<>(makeMap("error", "Nope, muy dude"), HttpStatus.FORBIDDEN);
+                    // A Forbidden response should be sent if the user already has submitted a salvo for the turn listed.
+                } else if (gamePlayerOptional2.isPresent() && salvo.getTurn() - 1 > gamePlayerOptional2.get().getSalvos().size()) {
+                    return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
+                } else if (gamePlayerOptional2.isEmpty() && salvo.getTurn() == 1) {
+                    return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
+                } else {
+                    salvo.setGamePlayer(gamePlayer);
+                    gamePlayer.addSalvo(salvo);
+                    salvoRepository.save(salvo);
+
+                    return new ResponseEntity<>(makeMap("OK", "Your salvoes were added"), HttpStatus.CREATED);
+                }
+            }
+        }
+    }
+
 
     // <---- Data transfer Objects ----> //
 

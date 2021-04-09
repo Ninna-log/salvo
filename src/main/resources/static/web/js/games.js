@@ -168,12 +168,12 @@ function updateView() {
             $('#currentPlayer').text(data.player.email);
             $('#login-form').hide("slow");
             $('#logout-form').show("slow");
-
+            $('#createGameForm').show();
         }
 }
 
 function showGamesTable(gamesData) {
-        // let mytable = $('<table></table>').attr({id: "gamesTable", class: ""});
+        let mytable = $('<table></table>').attr({id: "gamesTable", class: ""});
         var table = "#gamesList tbody";
         var gpid;
         $(table).empty();
