@@ -62,7 +62,7 @@ function refreshGameView(_url) {
         type: 'GET',
         success: function (data) {
             gamePlayerData = data;
-            // console.log(gamePlayerData);
+            console.log(gamePlayerData);
             // createTable(player1);
             // createTable(player2);
 
@@ -210,35 +210,35 @@ function showSelf (gamePlayerData) {
                 } else {
             $(firstCellID).html('<img class="shipsImgOnSelfGridHor" src="img/' + ship.type + 'hor.png">');
         }
-        // console.log(ship.type);
+        console.log(ship.type);
         ship.locations.forEach(function(location) {
             var cellID = "#p1_" + location;
             $(cellID).addClass("shipCell");
-       //     console.log(location);
+            console.log(location);
         });
     });
 
     gamePlayerData.salvoes.forEach(function(salvo) {
 
-      //  console.log("Turn: " + salvo.turn);
+        console.log("Turn: " + salvo.turn);
         salvo.locations.forEach(function(location) {
             var cellID;
             if (salvo.player == youID){
                 cellID = "#" + location;
                 $(cellID).addClass("salvoCell");
 
-        //        console.log("Your salvo on " + location);
+                console.log("Your salvo on " + location);
                 $(cellID).text(salvo.turn);
             } else {
                 cellID = "#p1_" + location;
                 if ($(cellID).hasClass("shipCell")) {
                     $(cellID).addClass("hitCell");
 
-          //          console.log("Opponent Hits Ship on " + location);
+                    console.log("Opponent Hits Ship on " + location);
                 } else {
                     $(cellID).addClass("salvoCellSelf");
                     $(cellID).text(salvo.turn);
-          //          console.log("Opponent salvo on " + location);
+                    console.log("Opponent salvo on " + location);
                 }
             }
 

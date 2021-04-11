@@ -34,7 +34,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.headers().frameOptions().disable(); //<--- Para que se pueda ver la BD /h2-console
         http.authorizeRequests()
-                .antMatchers("/api/game_view/**","/web/game.html").hasAnyAuthority("USER")
+                .antMatchers("/api/game_view/**","/web/game.html", "/api/games/players/**").hasAnyAuthority("USER")
                 .antMatchers("/web/**", "/api/**").permitAll()
                 .antMatchers("/rest/**").hasAnyAuthority("user")
                 .anyRequest().permitAll();

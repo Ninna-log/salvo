@@ -141,14 +141,14 @@ public class SalvoController {
                 }else if (gamePlayer.getShips().size() > 0){
                     return new ResponseEntity<>(makeMap("error", "Nope, you've already placed your ships, my dude"), HttpStatus.FORBIDDEN);
                 }else if(ships.size() != 5) {
-                    return new ResponseEntity<>(makeMap("error", "You should add 5 ships"), HttpStatus.FORBIDDEN);
+                    return new ResponseEntity<>(makeMap("error", "You should add 5 ships, my dude"), HttpStatus.FORBIDDEN);
                 }else{
                     ships.forEach((ship)-> {
                         gamePlayer.addShip(ship);
                         gamePlayerRepository.save(gamePlayer);
                     });
                     //Otherwise, the ships should be added to the game player and saved, and a Created response should be sent.
-                    return new ResponseEntity<>(makeMap("gpid", "Ships were successfully added"), HttpStatus.CREATED);
+                    return new ResponseEntity<>(makeMap("OK", "Ships were successfully added"), HttpStatus.CREATED);
                 }
             }
         }
@@ -172,14 +172,48 @@ public class SalvoController {
                 } else if (salvo.getLocations().size() != 5) {  // salvo has Turn, Player and Location
                     return new ResponseEntity<>(makeMap("error", "You should add 5 salvoes"), HttpStatus.FORBIDDEN);
                 } else if (salvo.getTurn() - 1 != gamePlayer.getSalvos().size()) {
+                    // PERMITE QUE EL JUGADOR NO SE ADELANTE CON RESPECTO A SUS TURNOS ACUMULADOS
+                    //  SI salvo.getTurn() == gamePlayer.getSalvos.size()
+                    //        PUEDE DISPARAR Y GUARDAR SALVOS
+                    //                    x = y + 1
+                    //           1                      0
+                    //                    1 = 0 + 1
+                    //                    1 = 1    OK SÍ PUEDE DISPARAR
+                    //           2                      0
+                    //                    2 = 0 + 1
+                    //                    2 = 1    NO SON IGUALES, NO GUARDA DISPAROS
+                    //           3        3 = 0 + 1
+                    //                    3 = 1    NO SON IGUALES, NO GUARDA DISPAROS
+                    //           1        1 = 1 + 1
+                    //                    1 = 2    NO SON IGUALES, NO GUARDA
+                    //           1                     2
+                    //                    1 = 2 + 1
+                    //                    1 = 3     NO SON IGUALES, NO GUARDA
+                    //           4                     2
+                    //                    4 = 2 + 1
+                    //                    4 = 3     NO SON IGUALES, NO GUARDA
+                    //           2                 1
+                    //                    2 = 1 + 1
+                    //                    2 = 2     SÍ GUARDA, SON IGUALES
+                    //           2                 3
+                    //                    2 = 3 + 1
+                    //                    2 = 4     NO SON IGUALES, NO GUARDA
+                    //           2                 2
+
+
                     // e.g, if turn is = 1 and size is = 1, turn 1 -1 is 0, then 0 != 1 it's true, user hasn´t submitted a salvo in the same turn
                     // otherwise, if turn is 2 and size = 1, turn 2 -1 is 1, then 1 != 1 it's false
                     // it's only true when salvo.getTurn & gameplayer,getSalvos.size have the same numbers
                     return new ResponseEntity<>(makeMap("error", "Nope, muy dude"), HttpStatus.FORBIDDEN);
                     // A Forbidden response should be sent if the user already has submitted a salvo for the turn listed.
                 } else if (gamePlayerOptional2.isPresent() && salvo.getTurn() - 1 > gamePlayerOptional2.get().getSalvos().size()) {
+                    // PERMITE QUE EL JUGADOR NO SE ADELANTE CON RESPECTO A LOS TURNOS ACUMULADOS DEL ENEMIGO
+                    //                    SI O NO                    X                             Y
+                    //                                                        X - 1 > Y
+                    //                       SI                               4 - 1 > 2
+                    //                                                            3 > 2
                     return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
-                } else if (gamePlayerOptional2.isEmpty() && salvo.getTurn() == 1) {
+                } else if (gamePlayerOptional2.isEmpty() && salvo.getTurn() == 1) { // PERMITE QUE EL JUGADOR NO DISPARE ANTES DE TENER UN ENEMIGO
                     return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
                 } else {
                     salvo.setGamePlayer(gamePlayer);
@@ -206,7 +240,43 @@ public class SalvoController {
         dto.put("gamePlayers", gamePlayer.getGame().getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(Collectors.toList()));
         dto.put("ships", gamePlayer.getShips().stream().map(this::makeShipDTO).collect(Collectors.toList()));
         dto.put("salvoes", gamePlayer.getGame().getGamePlayers().stream().flatMap(gamePlayer1 -> gamePlayer1.getSalvos().stream()).map(this::makeSalvoDTO).collect(Collectors.toList()));
-        dto.put("hits", hits);
+        dto.put("hits", gamePlayer.getSalvos().stream().map(salvo -> makeHitsDTO(salvo)));
+        return dto;
+    }
+
+    private Map<String, Object> makeHitsDTO(Salvo salvo){
+        Map<String, Object> dto = new LinkedHashMap<String, Object>();
+        Optional<GamePlayer> enemy = salvo.getGamePlayer().getEnemy();
+        dto.put("self", makeSelfDTO(salvo));
+        if (enemy.isPresent()){
+            dto.put("opponent", enemy.get().getSalvos().stream().map(salvo1 -> makeOpponentDTO(salvo1)));
+        }else{
+            dto.put("opponent", new ArrayList<>());
+        }
+        return dto;
+    }
+
+    private Map<String, Object> makeSelfDTO(Salvo salvo){
+        Map<String, Object> missed = new LinkedHashMap<String, Object>();
+        Map<String, Object> dto = new LinkedHashMap<String, Object>();
+        dto.put("turn", salvo.getTurn());
+        dto.put("hitLocations", salvo.getGamePlayer().getSalvos().stream().map(salvo1 -> salvo.getHits()));
+        dto.put("damages", salvo.getGamePlayer().getSalvos().stream().map(salvo1 -> salvo.getSunkenShips()));
+        dto.put("missed", missed);
+        return dto;
+    }
+        // gamePlayer.getSalvos().stream().map(Salvo::hitsDTO)
+        // gamePlayer.getSalvos().stream().map(Salvo::sunkenDTO)
+        //enemy.get().getSalvos().stream().map(Salvo::hitsDTO)
+        //enemy.get().getSalvos().stream().map(Salvo::salvoSunkenDTO)
+
+    private Map<String, Object> makeOpponentDTO(Salvo salvo){
+        Map<String, Object> missed = new LinkedHashMap<String, Object>();
+        Map<String, Object> dto = new LinkedHashMap<String, Object>();
+        dto.put("turn", salvo.getTurn());
+        dto.put("hitLocations", salvo.getGamePlayer().getEnemy().get().getSalvos().stream().map(salvo1 -> salvo.getHits()));
+        dto.put("damages", salvo.getGamePlayer().getEnemy().get().getSalvos().stream().map(salvo1 -> salvo.getSunkenShips()));
+        dto.put("missed", missed);
         return dto;
     }
 
