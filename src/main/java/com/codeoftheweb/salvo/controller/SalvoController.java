@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -160,67 +161,27 @@ public class SalvoController {
             return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.UNAUTHORIZED);
         }else{
             Optional<GamePlayer> gamePlayerOptional = gamePlayerRepository.findById(gamePlayerId);
-            if(gamePlayerOptional.isEmpty()) {
+            if(gamePlayerOptional.isEmpty()){
                 return new ResponseEntity<>(makeMap("error", "Not found"), HttpStatus.NOT_FOUND);
             }else {
                 Player player = playerRepository.findByUserName(authentication.getName());
                 GamePlayer gamePlayer = gamePlayerOptional.get();
-                Optional<GamePlayer> gamePlayerOptional2 = gamePlayer.getGame().getGamePlayers().stream().filter(gamePlayer1 -> gamePlayer1.getId() != gamePlayer.getId()).findFirst();
+                //Optional<GamePlayer> gamePlayerOptional2 = gamePlayer.getGame().getGamePlayers().stream().filter(gamePlayer1 -> gamePlayer1.getId() != gamePlayer.getId()).findFirst();
+                GamePlayer enemy = gamePlayer.getEnemy();
 
                 if (gamePlayer.getPlayer().getId() != player.getId()) {
                     return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.FORBIDDEN);
-                } else if (salvo.getLocations().size() != 5) {  // salvo has Turn, Player and Location
+                } else if (enemy.getId() == 0){
+                    return new ResponseEntity<>(makeMap("error", "Nope, my dude"), HttpStatus.FORBIDDEN);
+                } else if (salvo.getLocations().size() != 5) {
                     return new ResponseEntity<>(makeMap("error", "You should add 5 salvoes"), HttpStatus.FORBIDDEN);
-                } else if (salvo.getTurn() - 1 != gamePlayer.getSalvos().size()) {
-                    // PERMITE QUE EL JUGADOR NO SE ADELANTE CON RESPECTO A SUS TURNOS ACUMULADOS
-                    //  SI salvo.getTurn() == gamePlayer.getSalvos.size()
-                    //        PUEDE DISPARAR Y GUARDAR SALVOS
-                    //                    x = y + 1
-                    //           1                      0
-                    //                    1 = 0 + 1
-                    //                    1 = 1    OK SÍ PUEDE DISPARAR
-                    //           2                      0
-                    //                    2 = 0 + 1
-                    //                    2 = 1    NO SON IGUALES, NO GUARDA DISPAROS
-                    //           3        3 = 0 + 1
-                    //                    3 = 1    NO SON IGUALES, NO GUARDA DISPAROS
-                    //           1        1 = 1 + 1
-                    //                    1 = 2    NO SON IGUALES, NO GUARDA
-                    //           1                     2
-                    //                    1 = 2 + 1
-                    //                    1 = 3     NO SON IGUALES, NO GUARDA
-                    //           4                     2
-                    //                    4 = 2 + 1
-                    //                    4 = 3     NO SON IGUALES, NO GUARDA
-                    //           2                 1
-                    //                    2 = 1 + 1
-                    //                    2 = 2     SÍ GUARDA, SON IGUALES
-                    //           2                 3
-                    //                    2 = 3 + 1
-                    //                    2 = 4     NO SON IGUALES, NO GUARDA
-                    //           2                 2
-
-
-                    // e.g, if turn is = 1 and size is = 1, turn 1 -1 is 0, then 0 != 1 it's true, user hasn´t submitted a salvo in the same turn
-                    // otherwise, if turn is 2 and size = 1, turn 2 -1 is 1, then 1 != 1 it's false
-                    // it's only true when salvo.getTurn & gameplayer,getSalvos.size have the same numbers
-                    return new ResponseEntity<>(makeMap("error", "Nope, muy dude"), HttpStatus.FORBIDDEN);
-                    // A Forbidden response should be sent if the user already has submitted a salvo for the turn listed.
-                } else if (gamePlayerOptional2.isPresent() && salvo.getTurn() - 1 > gamePlayerOptional2.get().getSalvos().size()) {
-                    // PERMITE QUE EL JUGADOR NO SE ADELANTE CON RESPECTO A LOS TURNOS ACUMULADOS DEL ENEMIGO
-                    //                    SI O NO                    X                             Y
-                    //                                                        X - 1 > Y
-                    //                       SI                               4 - 1 > 2
-                    //                                                            3 > 2
-                    return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
-                } else if (gamePlayerOptional2.isEmpty() && salvo.getTurn() == 1) { // PERMITE QUE EL JUGADOR NO DISPARE ANTES DE TENER UN ENEMIGO
-                    return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
-                } else {
+                } else if (gamePlayer.getSalvos().size() <= enemy.getSalvos().size()) {
+                    salvo.setTurn(gamePlayer.getSalvos().size() + 1);
                     salvo.setGamePlayer(gamePlayer);
-                    gamePlayer.addSalvo(salvo);
                     salvoRepository.save(salvo);
-
                     return new ResponseEntity<>(makeMap("OK", "Your salvoes were added"), HttpStatus.CREATED);
+                }else{
+                    return new ResponseEntity<>(makeMap("error", "Wait 4 your enemy"), HttpStatus.FORBIDDEN);
                 }
             }
         }
@@ -232,61 +193,133 @@ public class SalvoController {
     private Map<String, Object> toGameViewDTO(GamePlayer gamePlayer) {
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
         Map<String, Object> hits = new LinkedHashMap<String, Object>();
-        hits.put("self", new ArrayList<>());
-        hits.put("opponent", new ArrayList<>());
+        GamePlayer enemy = gamePlayer.getEnemy();
+
         dto.put("id", gamePlayer.getId());
         dto.put("created", gamePlayer.getDate());
         dto.put("gameState", "PLACESHIPS");
         dto.put("gamePlayers", gamePlayer.getGame().getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(Collectors.toList()));
         dto.put("ships", gamePlayer.getShips().stream().map(this::makeShipDTO).collect(Collectors.toList()));
         dto.put("salvoes", gamePlayer.getGame().getGamePlayers().stream().flatMap(gamePlayer1 -> gamePlayer1.getSalvos().stream()).map(this::makeSalvoDTO).collect(Collectors.toList()));
-        dto.put("hits", gamePlayer.getSalvos().stream().map(salvo -> makeHitsDTO(salvo)));
+        dto.put("hits", hits);
+        hits.put("self", hitsAndSinks(gamePlayer, enemy));
+        hits.put("opponent", hitsAndSinks(enemy, gamePlayer));
         return dto;
     }
 
-    private Map<String, Object> makeHitsDTO(Salvo salvo){
+    private Map<String, Object> hitsAndSinks(GamePlayer self, GamePlayer enemy){
         Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        Optional<GamePlayer> enemy = salvo.getGamePlayer().getEnemy();
-        dto.put("self", makeSelfDTO(salvo));
-        if (enemy.isPresent()){
-            dto.put("opponent", enemy.get().getSalvos().stream().map(salvo1 -> makeOpponentDTO(salvo1)));
-        }else{
-            dto.put("opponent", new ArrayList<>());
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+
+        List<Map> hits = new ArrayList<>();
+
+        // total damage
+        int carrierDamage = 0;
+        int battleshipDamage = 0;
+        int submarineDamage = 0;
+        int destroyerDamage = 0;
+        int patrolboatDamage = 0;
+
+        // ship locations
+        List<String> carrierLocations = findShipLocations(self, "carrier");
+        List<String> battleshipLocations = findShipLocations(self, "battleship");
+        List<String> submarineLocations = findShipLocations(self, "submarine");
+        List<String> destroyerLocations = findShipLocations(self, "destroyer");
+        List<String> patrolboatLocations = findShipLocations(self, "patrolboat");
+
+        for (Salvo salvo : enemy.getSalvos()){
+
+            Map<String, Object> damagesPerTurn= new LinkedHashMap<>();
+            Map<String, Object> hitsPerTurn= new LinkedHashMap<>();
+
+            List<String> hitCellsList = new ArrayList<>();
+
+            // hits in turn counter
+            int carrierTurn = 0;
+            int battleshipTurn = 0;
+            int submarineTurn = 0;
+            int destroyerTurn = 0;
+            int patrolboatTurn = 0;
+
+            // missed shots
+            int missedShots = salvo.getLocations().size();
+
+            for (String location : salvo.getLocations()){
+
+                if(carrierLocations.contains(location)){
+                    carrierDamage++;
+                    carrierTurn++;
+                    hitCellsList.add(location);
+                    missedShots--;
+                }
+                if(battleshipLocations.contains(location)){
+                    battleshipDamage++;
+                    battleshipTurn++;
+                    hitCellsList.add(location);
+                    missedShots--;
+                }
+                if(submarineLocations.contains(location)){
+                    submarineDamage++;
+                    submarineTurn++;
+                    hitCellsList.add(location);
+                    missedShots--;
+                }
+                if(destroyerLocations.contains(location)){
+                    destroyerDamage++;
+                    destroyerTurn++;
+                    hitCellsList.add(location);
+                    missedShots--;
+                }
+                if (patrolboatLocations.contains(location)){
+                    patrolboatDamage++;
+                    patrolboatTurn++;
+                    hitCellsList.add(location);
+                    missedShots--;
+                }
+
+                dto.put("turn", salvo.getTurn());
+                dto.put("missed", missedShots);
+                dto.put("damages", damagesPerTurn);
+
+                map.put("carrierHits", carrierDamage);
+                map.put("battleshipHits", battleshipDamage);
+                map.put("submarineHits", submarineDamage);
+                map.put("destroyerHits", destroyerDamage);
+                map.put("patrolboatHits", patrolboatDamage);
+                map.put("carrier", );
+                map.put("battleship", );
+                map.put("submarine", );
+                map.put("destroyer", );
+                map.put("patrolboat", );
+
+            
+            }
+            // daños total
+            damagesPerTurn.put("carrierHits", carrierTurn);
+            damagesPerTurn.put("battleshipHits", battleshipTurn);
+            damagesPerTurn.put("submarineHits", submarineTurn);
+            damagesPerTurn.put("destroyerHits", destroyerTurn);
+            damagesPerTurn.put("patrolboatHits", patrolboatTurn);
+
+            //DTO dentro de hits
+            hitsPerTurn.put("turn", salvo.getTurn());
+            hitsPerTurn.put("missed", missedShots);
+            hitsPerTurn.put("damage", damagesPerTurn);
+            hitsPerTurn.put("hitLocations", hitCellsList); // donde golpee en cada turno
         }
-        return dto;
+        return hits;
     }
 
-    private Map<String, Object> makeSelfDTO(Salvo salvo){
-        Map<String, Object> missed = new LinkedHashMap<String, Object>();
-        Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        dto.put("turn", salvo.getTurn());
-        dto.put("hitLocations", salvo.getGamePlayer().getSalvos().stream().map(salvo1 -> salvo.getHits()));
-        dto.put("damages", salvo.getGamePlayer().getSalvos().stream().map(salvo1 -> salvo.getSunkenShips()));
-        dto.put("missed", missed);
-        return dto;
-    }
-        // gamePlayer.getSalvos().stream().map(Salvo::hitsDTO)
-        // gamePlayer.getSalvos().stream().map(Salvo::sunkenDTO)
-        //enemy.get().getSalvos().stream().map(Salvo::hitsDTO)
-        //enemy.get().getSalvos().stream().map(Salvo::salvoSunkenDTO)
 
-    private Map<String, Object> makeOpponentDTO(Salvo salvo){
-        Map<String, Object> missed = new LinkedHashMap<String, Object>();
-        Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        dto.put("turn", salvo.getTurn());
-        dto.put("hitLocations", salvo.getGamePlayer().getEnemy().get().getSalvos().stream().map(salvo1 -> salvo.getHits()));
-        dto.put("damages", salvo.getGamePlayer().getEnemy().get().getSalvos().stream().map(salvo1 -> salvo.getSunkenShips()));
-        dto.put("missed", missed);
-        return dto;
+    private List<String> findShipLocations(GamePlayer self, String type){
+        return  (self.getShips().stream().filter(ship -> ship.getType() == type).findFirst().orElse(null)).getLocations();
     }
 
-    private Map<String, Object> makeGameDTO(Game game) {
-        Map<String, Object> dto = new LinkedHashMap<String, Object>();
-        dto.put("id", game.getId());
-        dto.put("created", game.getDate());
-        dto.put("gamePlayers", game.getGamePlayers().stream().map(this::makeGamePlayerDTO).collect(toList()));
-        dto.put("scores", game.getScores().stream().map(this::makeScoreDTO).collect(toList()));
-        return dto;
+    private Boolean sunkenShips(GamePlayer self, GamePlayer enemy){
+        if (!enemy.getEnemy().getShips().isEmpty() && !self.getSalvos().isEmpty()){
+            return enemy.getEnemy().getSalvos().stream().flatMap(salvo -> salvo.getLocations().stream()).collect(Collectors.toList())
+                    .containsAll(self.getShips().stream().flatMap(ship -> ship.getLocations().stream()).collect(Collectors.toList()));
+        }
     }
 
     private Object makeGamePlayerDTO(GamePlayer gamePlayer) {

@@ -39,8 +39,8 @@ public class GamePlayer {
         this.date = date;
     }
 
-    public Optional<GamePlayer> getEnemy() {
-        return this.game.getGamePlayers().stream().filter(gp -> gp.getId() != this.id).findFirst();
+    public GamePlayer getEnemy() {
+        return this.game.getGamePlayers().stream().filter(gp -> gp.getId() != this.id).findFirst().orElse(new GamePlayer());
     }
 
     public long getId() {

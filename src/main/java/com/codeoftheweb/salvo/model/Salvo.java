@@ -33,14 +33,14 @@ public class Salvo {
     }
 
     public List<String> getHits() {
-   // DEVUELVE UN LISTADO DE LAS CON LAS LOCACIONES DONDE LOS BARCOS DEL ENEMIGO FUERON GOLPEADOS
-        Optional<GamePlayer> enemy = this.gamePlayer.getEnemy(); // getEnemy() is defined in gamePlayer
+   // DEVUELVE UN LISTADO DE LAS LOCACIONES DONDE LOS BARCOS DEL ENEMIGO FUERON GOLPEADOS
+        GamePlayer enemy = this.gamePlayer.getEnemy(); // getEnemy() is defined in gamePlayer
 
-        if(enemy.isPresent()){
+        if(enemy.getId() != 0){
 
             List<String> viewerLocations = this.locations; // viewer locations
             List<String> enemyLocations = new ArrayList<>();
-            Set<Ship> enemyShips = enemy.get().getShips(); // enemy locations
+            Set<Ship> enemyShips = enemy.getShips(); // enemy locations
 
             enemyShips.forEach(ship -> enemyLocations.addAll(ship.getLocations()));
 
@@ -53,15 +53,15 @@ public class Salvo {
 
     public List<Ship> getSunkenShips() {
         // DEVUELVE UN LISTADO DE LOS BARCOS HUNDIDOS DEL ENEMIGO, CUYAS LOCACIONES COINCIDEN CON LOS SALVOS DEL VIEWER
-        Optional<GamePlayer> enemy = this.gamePlayer.getEnemy();
+        GamePlayer enemy = this.gamePlayer.getEnemy();
 
-        if(enemy.isPresent()){
+        if(enemy.getId() != 0){
             List<String> allShots = new ArrayList<>();
 
             Set<Salvo> viewerSalvoes = this.gamePlayer.getSalvos().stream()
                     .filter(salvo -> salvo.getTurn() <= this.turn).collect(Collectors.toSet());
 
-            Set<Ship> enemyShips = enemy.get().getShips();
+            Set<Ship> enemyShips = enemy.getShips();
 
             viewerSalvoes.forEach(salvo -> allShots.addAll(salvo.getLocations()));
 
