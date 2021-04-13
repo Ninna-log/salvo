@@ -3,6 +3,7 @@ package com.codeoftheweb.salvo.model;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,7 +19,10 @@ public class Ship {
     private GamePlayer gamePlayer;
     private String type;
 
-    public Ship(){}
+    public Ship(){
+        this.locations = new ArrayList<>();
+        this.type = "undefined";
+    }
 
     public Ship(String type, List<String> locations) {
         this.locations = locations;

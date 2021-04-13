@@ -31,7 +31,10 @@ public class GamePlayer {
     @OneToMany(mappedBy = "gamePlayer", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Salvo> salvos = new HashSet<>();
 
-    public GamePlayer(){}
+    public GamePlayer(){
+        this.salvos = new HashSet<>();
+        this.ships = new HashSet<>();
+    }
 
     public GamePlayer(Player player, Game game, LocalDateTime date) {
         this.player = player;
@@ -41,6 +44,55 @@ public class GamePlayer {
 
     public GamePlayer getEnemy() {
         return this.game.getGamePlayers().stream().filter(gp -> gp.getId() != this.id).findFirst().orElse(new GamePlayer());
+    }
+
+    public GameStatus gameStateManagement() {
+
+        GamePlayer enemy = this.getEnemy();
+        if (this.getShips().isEmpty()) {
+            return GameStatus.PLACESHIPS;
+        } else if (enemy == null) { // if enemy doesn't exists yet
+            return GameStatus.WAITINGFOROPP;
+        } else {  // salvos porque se quiere recorrer el arreglo de salvos, y getSalvos() porque se quiere obtener el size directamente
+
+            int salvosViewer = this.getSalvos().size();
+            int salvosEnemy = this.getEnemy().getSalvos().size();
+            int sunksViewer = 0;
+            int sunksEnemy = 0;
+
+            Optional<Salvo> gpTurn = this.salvos.stream().filter(salvo -> salvo.getTurn() == this.getSalvos().size()).findFirst(); // last turn played
+            Optional<Salvo> enemyTurn = enemy.salvos.stream().filter(salvo -> salvo.getTurn() == enemy.getSalvos().size()).findFirst();
+
+            if (gpTurn.isPresent()) { // vieweeerrr
+                salvosViewer = gpTurn.get().getTurn(); // gets last turn played by the viewer
+                sunksViewer = gpTurn.get().getSunkenShips().size(); // gets sunken ships from the last turn
+            }
+            if (enemyTurn.isPresent()) { // enemy
+                salvosEnemy = enemyTurn.get().getTurn(); // gets last turn played by the enemy
+                sunksEnemy = enemyTurn.get().getSunkenShips().size(); // gets sunken ships from the last turn
+            }
+
+            // States of the game when has already begun
+            if (salvosViewer < salvosEnemy) {
+                return GameStatus.PLAY;
+            } else if (salvosViewer > salvosEnemy) {
+                return GameStatus.WAIT;
+            }else { // When salvosViewer == salvosEnemy starts to validate other scenarios
+                if (sunksViewer < 5 && sunksEnemy == 5) {
+                    return GameStatus.LOST;
+                } else if (sunksViewer == 5 && sunksEnemy < 5) {
+                    return GameStatus.WON;
+                } else if (sunksViewer == 5 && sunksEnemy == 5) {
+                    return GameStatus.TIE;
+                }else {
+                    if (this.id < enemy.getId()){
+                        return GameStatus.PLAY;
+                    }else {
+                        return GameStatus.WAIT;
+                    }
+                }
+            }
+        }
     }
 
     public long getId() {

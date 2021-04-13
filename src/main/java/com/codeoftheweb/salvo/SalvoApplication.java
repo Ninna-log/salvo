@@ -82,46 +82,45 @@ public class SalvoApplication {
 			List<String> salvoLocations13 = new ArrayList<>(Arrays.asList("J1","J2", "J3", "J4", "J5", "J6", "J7", "J8"));
 
 			// creating ships with their locations as arrays
-			Ship ship1 = new Ship("Carrier",shipLocations1);
-			Ship ship2 = new Ship("Battleship", shipLocations2);
-			Ship ship3 = new Ship("Submarine", shipLocations3);
-			Ship ship4 = new Ship("Destroyer", shipLocations4);
-			Ship ship5 = new Ship("Patrol Boat", shipLocations5);
-			Ship ship6 = new Ship("Submarine", shipLocations6);
-			Ship ship7 = new Ship("Destroyer", shipLocations7);
-			Ship ship8 = new Ship("Patrol Boat", shipLocations8);
-			Ship ship9 = new Ship("Submarine", shipLocations9);
-			Ship ship10 = new Ship("Destroyer", shipLocations10);
-			Ship ship11 = new Ship("Carrier",shipLocations11);
-			Ship ship12 = new Ship("Battleship", shipLocations12);
-			Ship ship13 = new Ship("Submarine", shipLocations13);
+			Ship ship1 = new Ship("carrier",shipLocations1);
+			Ship ship2 = new Ship("battleship", shipLocations2);
+			Ship ship3 = new Ship("submarine", shipLocations3);
+			Ship ship4 = new Ship("destroyer", shipLocations4);
+			Ship ship5 = new Ship("patrol Boat", shipLocations5);
+			Ship ship6 = new Ship("submarine", shipLocations6);
+			Ship ship7 = new Ship("destroyer", shipLocations7);
+			Ship ship8 = new Ship("patrol Boat", shipLocations8);
+			Ship ship9 = new Ship("submarine", shipLocations9);
+			Ship ship10 = new Ship("destroyer", shipLocations10);
+			Ship ship11 = new Ship("carrier",shipLocations11);
+			Ship ship12 = new Ship("battleship", shipLocations12);
+			Ship ship13 = new Ship("submarine", shipLocations13);
 
+
+            // associating everything that has to be with game and player with gamePlayer @Many-to-many
+            GamePlayer gamePlayer1 = new GamePlayer(player1, game1, LocalDateTime.now());
+            GamePlayer gamePlayer2 = new GamePlayer(player2, game1, LocalDateTime.now());
+            GamePlayer gamePlayer3 = new GamePlayer(player3, game2, LocalDateTime.now());
+            GamePlayer gamePlayer4 = new GamePlayer(player4, game2, LocalDateTime.now());
+            GamePlayer gamePlayer5 = new GamePlayer(player4, game3, LocalDateTime.now());
+            GamePlayer gamePlayer6 = new GamePlayer(player3, game3, LocalDateTime.now());
+            GamePlayer gamePlayer7 = new GamePlayer(player2, game4, LocalDateTime.now());
+            GamePlayer gamePlayer8 = new GamePlayer(player1, game4, LocalDateTime.now());
 
 			// creating salvoes with their salvoLocations as arrays
-			Salvo salvo1 = new Salvo(1,salvoLocations1);
-			Salvo salvo2 = new Salvo(2,salvoLocations2);
-			Salvo salvo3 = new Salvo(3,salvoLocations3);
-			Salvo salvo4 = new Salvo(4,salvoLocations4);
-			Salvo salvo5 = new Salvo(5,salvoLocations5);
-			Salvo salvo6 = new Salvo(3,salvoLocations6);
-			Salvo salvo7 = new Salvo(4,salvoLocations7);
-			Salvo salvo8 = new Salvo(5,salvoLocations8);
-			Salvo salvo9 = new Salvo(4,salvoLocations9);
-			Salvo salvo10 = new Salvo(5,salvoLocations10);
-			Salvo salvo11 = new Salvo(1,salvoLocations11);
-			Salvo salvo12 = new Salvo(2,salvoLocations12);
-			Salvo salvo13 = new Salvo(3,salvoLocations13);
-
-
-			// associating everything that has to be with game and player with gamePlayer @Many-to-many
-			GamePlayer gamePlayer1 = new GamePlayer(player1, game1, LocalDateTime.now());
-			GamePlayer gamePlayer2 = new GamePlayer(player2, game1, LocalDateTime.now());
-			GamePlayer gamePlayer3 = new GamePlayer(player3, game2, LocalDateTime.now());
-			GamePlayer gamePlayer4 = new GamePlayer(player4, game2, LocalDateTime.now());
-			GamePlayer gamePlayer5 = new GamePlayer(player4, game3, LocalDateTime.now());
-			GamePlayer gamePlayer6 = new GamePlayer(player3, game3, LocalDateTime.now());
-			GamePlayer gamePlayer7 = new GamePlayer(player2, game4, LocalDateTime.now());
-			GamePlayer gamePlayer8 = new GamePlayer(player1, game4, LocalDateTime.now());
+			Salvo salvo1 = new Salvo(1,salvoLocations1,gamePlayer1);
+			Salvo salvo2 = new Salvo(2,salvoLocations2,gamePlayer2);
+			Salvo salvo3 = new Salvo(3,salvoLocations3,gamePlayer3);
+			Salvo salvo4 = new Salvo(4,salvoLocations4,gamePlayer4);
+			Salvo salvo5 = new Salvo(5,salvoLocations5,gamePlayer5);
+			Salvo salvo6 = new Salvo(3,salvoLocations6,gamePlayer6);
+			Salvo salvo7 = new Salvo(4,salvoLocations7,gamePlayer7);
+			Salvo salvo8 = new Salvo(5,salvoLocations8,gamePlayer8);
+			Salvo salvo9 = new Salvo(4,salvoLocations9,gamePlayer1);
+			Salvo salvo10 = new Salvo(5,salvoLocations10,gamePlayer2);
+			Salvo salvo11 = new Salvo(1,salvoLocations11,gamePlayer3);
+			Salvo salvo12 = new Salvo(2,salvoLocations12,gamePlayer4);
+			Salvo salvo13 = new Salvo(3,salvoLocations13,gamePlayer5);
 
 
 			//adding ships to every gamePlayer

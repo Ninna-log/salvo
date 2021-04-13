@@ -25,37 +25,21 @@ public class Salvo {
     @ElementCollection
     private List<String> locations;
 
-    public Salvo() { }
+    public Salvo() {
+        this.locations = new ArrayList<>();
+        this.turn = 0;
+    }
 
-    public Salvo(int turn, List<String> locations) {
+    public Salvo(int turn, List<String> locations, GamePlayer gamePlayer) {
         this.turn = turn;
         this.locations = locations;
+        this.gamePlayer = gamePlayer;
     }
 
-    public List<String> getHits() {
-   // DEVUELVE UN LISTADO DE LAS LOCACIONES DONDE LOS BARCOS DEL ENEMIGO FUERON GOLPEADOS
-        GamePlayer enemy = this.gamePlayer.getEnemy(); // getEnemy() is defined in gamePlayer
-
-        if(enemy.getId() != 0){
-
-            List<String> viewerLocations = this.locations; // viewer locations
-            List<String> enemyLocations = new ArrayList<>();
-            Set<Ship> enemyShips = enemy.getShips(); // enemy locations
-
-            enemyShips.forEach(ship -> enemyLocations.addAll(ship.getLocations()));
-
-            return viewerLocations.stream().filter(enemyLocations::contains).collect(Collectors.toList());
-        }
-        else{
-            return new ArrayList<>();
-        }
-    }
-
-    public List<Ship> getSunkenShips() {
-        // DEVUELVE UN LISTADO DE LOS BARCOS HUNDIDOS DEL ENEMIGO, CUYAS LOCACIONES COINCIDEN CON LOS SALVOS DEL VIEWER
+    public List<Ship> getSunkenShips() {  // list enemy's ships
         GamePlayer enemy = this.gamePlayer.getEnemy();
 
-        if(enemy.getId() != 0){
+        if(enemy != null){
             List<String> allShots = new ArrayList<>();
 
             Set<Salvo> viewerSalvoes = this.gamePlayer.getSalvos().stream()
@@ -72,27 +56,6 @@ public class Salvo {
             return new ArrayList<>();
         }
     }
-
-    /*public List<String> missed() {
-        Optional<GamePlayer> enemy = this.gamePlayer.getEnemy(); // getEnemy() is defined in gamePlayer
-
-        if(enemy.isPresent()){
-
-            List<String> viewerLocations = this.locations; // viewer locations
-            List<String> enemyLocations = new ArrayList<>();
-            Set<Ship> enemyShips = enemy.get().getShips(); // enemy locations
-
-            enemyShips.forEach(ship -> enemyLocations.addAll(ship.getLocations()));
-
-            return viewerLocations.stream().filter(enemyLocations::contains).collect(Collectors.toList());
-            return scores.stream().filter(score -> score.getGame().equals(game)).findFirst().orElse(null);
-            return viewerLocations.stream().filter(loc -> loc.equals(enemyLocations)).collect(Collectors.toList());
-        }
-        else{
-            return new ArrayList<>();
-        }
-    }*/
-
 
     public long getId() {
         return id;
@@ -120,6 +83,7 @@ public class Salvo {
     }
 
     public List<String> getLocations() {
+
         return locations;
     }
 
