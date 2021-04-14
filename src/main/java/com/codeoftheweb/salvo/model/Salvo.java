@@ -5,7 +5,6 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,27 +35,6 @@ public class Salvo {
         this.gamePlayer = gamePlayer;
     }
 
-    public List<Ship> getSunkenShips() {  // list enemy's ships
-        GamePlayer enemy = this.gamePlayer.getEnemy();
-
-        if(enemy != null){
-            List<String> allShots = new ArrayList<>();
-
-            Set<Salvo> viewerSalvoes = this.gamePlayer.getSalvos().stream()
-                    .filter(salvo -> salvo.getTurn() <= this.turn).collect(Collectors.toSet());
-
-            Set<Ship> enemyShips = enemy.getShips();
-
-            viewerSalvoes.forEach(salvo -> allShots.addAll(salvo.getLocations()));
-
-            return enemyShips.stream().filter(ship -> allShots.containsAll(ship.getLocations()))
-                    .collect(Collectors.toList());
-        }
-        else{
-            return new ArrayList<>();
-        }
-    }
-
     public long getId() {
         return id;
     }
@@ -82,12 +60,12 @@ public class Salvo {
         this.gamePlayer = gamePlayer;
     }
 
-    public List<String> getLocations() {
+    public List<String> getSalvoLocations() {
 
         return locations;
     }
 
-    public void setLocations(List<String> locations) {
+    public void setSalvoLocations(List<String> locations) {
         this.locations = locations;
     }
 }

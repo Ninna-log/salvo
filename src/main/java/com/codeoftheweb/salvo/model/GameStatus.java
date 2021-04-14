@@ -3,9 +3,9 @@ package com.codeoftheweb.salvo.model;
 public enum GameStatus {
     PLACESHIPS,
     WAITINGFOROPP,
-    PLAY,
     WAIT,
-    LOST,
+    PLAY,
     WON,
-    TIE
+    TIE,
+    LOST
 }

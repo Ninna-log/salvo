@@ -3,9 +3,7 @@ package com.codeoftheweb.salvo.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.persistence.*;
-import java.net.PasswordAuthentication;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
