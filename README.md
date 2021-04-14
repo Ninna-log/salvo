@@ -16,3 +16,7 @@ Players can create new games and join games that others have created.
 When a game has both players, players can place their ships on their grids.
 When ships have been placed, players can begin trading salvos (shots) and seeing the results (hits, sinks, and misses).
 When all of a player's ships have been sunk, the game ends and the winner is added to the leaderboard.
+
+URL: https://ninna-log.github.io/salvo/src/main/resources/static/web/games.html
+
+Enjoy!
