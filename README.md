@@ -42,4 +42,14 @@ Or you can also access to the project on Heroku:
 🌐 https://salvo-battleship-multiplayer.herokuapp.com/web/games.html
 
 
+👀<strong>Interfaces Salvo Battleship<strong>
+  
+<img align="center" src="https://github.com/Ninna-log/salvo/blob/main/img/interface1.jpg" alt="interface1" height="600" width="1800" />
+<br>
+<br>
 
+<img align="center" src="https://github.com/Ninna-log/salvo/blob/main/img/interface2.jpg" alt="interface2" height="600" width="1800" />
+<br>
+<br>
+
+<img align="center" src="https://github.com/Ninna-log/salvo/blob/main/img/interface3.jpg" alt="interface2" height="600" width="1800" />
