@@ -4,7 +4,7 @@ Web-based multi-player game application
 In this proyect I visualized myself as a developer who's been contacted by a board game company looking to use their brand recognition to market online games with a retro touch, asking for a multi-player online version of a Salvo-like game engine. Taking into account that Salvo was a pencil and paper game that was the basis for the popular Battleship game. The basic idea involves guessing where other players have hidden objects.
 
 I created a front-end web application that game players interact with, and a back-end game server to manage the games, scoring, and player profiles. 
-Using JavaScript for the front-end client, and the Spring Boot framework for the Java-based RESTful web server.
+Using JavaScript for the front-end client, and the Spring framework for the Java-based RESTful web server.
 
 The core architecture is divided as follows:
 
