@@ -1,9 +1,6 @@
 # salvo
-Web-based multi-player game application
 
-This is a multi-player online version of a Salvo-like game engine. Taking into account that Salvo was a pencil and paper game that was the basis for the popular Battleship game. The basic idea involves guessing where other players have hidden objects.
-
-I created a front-end web application that game players interact with, and a back-end game server to manage the games, scoring, and player profiles. 
+Front-end web application where game players interact with, and a back-end game server to manage the games, scoring, and player profiles. 
 Using JavaScript for the front-end client, and the Spring framework for the Java-based RESTful web server.
 
 📌 The core architecture is divided as follows:
@@ -24,9 +21,9 @@ Using JavaScript for the front-end client, and the Spring framework for the Java
 - Spring 2.1.4
 - Maven
 - H2 as a Database and Java Persistence Api (JPA)
-- Front-end developed on HTML5, CSS3, Bootstrap v4.1.3, jQuery and JavaScript.
+- Front-end developed on HTML5, CSS3, Bootstrap v4.1.3 and JavaScript.
 
-❗ Important subjects to take into account in order to compile the project:
+❗ How to compile the project:
 
 - Download and install JAVA 11
 - Download and install Java SE [JDK]
